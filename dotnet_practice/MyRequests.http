@@ -6,7 +6,7 @@ POST http://localhost:5144/todos
 content-type: application/json
 
 {
-  "id": 1,
+  "id": 2,
   "name": "test todo",
   "dueDate": "2024-01-03",
   "isCompleted": false
@@ -14,4 +14,6 @@ content-type: application/json
 
 ###
 DELETE http://localhost:5144/todos/1
+###
 
+GET http://localhost:5144/tasks/
