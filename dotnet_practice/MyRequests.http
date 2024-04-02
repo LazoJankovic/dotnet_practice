@@ -1,0 +1,17 @@
+# For more info on HTTP files go to https://aka.ms/vs/httpfile
+GET http://localhost:5144/todos
+
+###
+POST http://localhost:5144/todos
+content-type: application/json
+
+{
+  "id": 1,
+  "name": "test todo",
+  "dueDate": "2024-01-03",
+  "isCompleted": false
+}
+
+###
+DELETE http://localhost:5144/todos/1
+
