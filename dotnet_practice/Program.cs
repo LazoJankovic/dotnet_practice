@@ -2,8 +2,12 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Rewrite;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Threading.Tasks;
 
 var builder = WebApplication.CreateBuilder(args);
+//singleton refers to lifetime of dependency that we are resoving ( during lifetime of our application )
+builder.Services.AddSingleton<ITaskService>(new inMemoryTaskService());
+// other lifetimes can create a dependency everytime a request comes in... 
 
 var app = builder.Build();
 app.Urls.Add("http://localhost:5144");
@@ -18,18 +22,18 @@ app.Use(async (context, next) =>
 
 var todos = new List<Todo>();
 
-app.MapGet("/todos", () => todos); //minimal APIs understands  w/o strongly typed results
+app.MapGet("/todos", (ITaskService service) => service.GetTodos()); 
 
-app.MapGet("/todos/{id}", Results<Ok<Todo>, NotFound> (int id) =>
+app.MapGet("/todos/{id}", Results<Ok<Todo>, NotFound> (int id, ITaskService service) =>
 {
-    var targetTodo = todos.SingleOrDefault(t => id == t.Id);
+    var targetTodo = service.GetTodoById(id);
     return targetTodo is null ? TypedResults.NotFound() : TypedResults.Ok(targetTodo);
 
 });
   
 
-app.MapPost("/todos", (Todo task) => {
-    todos.Add(task);
+app.MapPost("/todos", (Todo task, ITaskService service) => {
+    service.AddTodo(task);  
     return TypedResults.Created("/todos{id}", task);
 
 }).AddEndpointFilter(async (context, next) =>
@@ -56,9 +60,9 @@ app.MapPost("/todos", (Todo task) => {
     return await next(context);
 }); ;
 
-app.MapDelete("/todos/{id}", (int id) =>   
+app.MapDelete("/todos/{id}", (int id, ITaskService service) =>   
 {
-    todos.RemoveAll(t => t.Id == id);
+    service.DeleteTodoById(id);
     return TypedResults.NoContent();
 });
 
@@ -66,3 +70,29 @@ app.Run();
 
 
 public record Todo(int Id, string Name, DateTime dueDate, bool isCompleted);
+
+
+interface ITaskService
+{
+    Todo? GetTodoById(int Id);
+    List<Todo> GetTodos();
+    void DeleteTodoById(int Id);
+    Todo AddTodo(Todo task);
+}
+
+class inMemoryTaskService : ITaskService
+{
+    private readonly List<Todo> _todos = [];
+
+    public Todo AddTodo(Todo task) {
+        _todos.Add(task);
+        return task; 
+    }
+    public void DeleteTodoById(int id) { 
+        _todos.RemoveAll(task => id == task.Id);
+    }
+
+    public Todo? GetTodoById(int id) {
+        return _todos.SingleOrDefault(task => id == task.Id); 
+    }
+}

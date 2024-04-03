@@ -11,12 +11,12 @@ content-type: application/json
 {
   "id": 2,
   "name": "test todo",
-  "dueDate": "2021-01-03",
-  "isCompleted": true
+  "dueDate": "2025-01-03",
+  "isCompleted": false
 }
 
 ###
 DELETE http://localhost:5144/todos/2
 ###
 
-GET http://localhost:5144/tasks
+GET http://localhost:5144/tasks/2
